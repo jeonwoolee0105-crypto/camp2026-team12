@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="ocean">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>12조 학년차이 4인방 — 눈아, 쉬자!</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.2/anime.min.js"></script>
+<style>
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    overflow: hidden;
+    font-family: 'Noto Sans KR', 'Malgun Gothic', sans-serif;
+    background: linear-gradient(160deg, var(--bg2) 0%, var(--bg1) 78%);
+    color: var(--fg);
+  }
+
+  /* 색 테마 — html 의 data-theme 값만 바꿔서 테마를 고른다 */
+  :root {
+    --bg1: #b9e0ff; --bg2: #eaf7ff; --fg: #0a2e4a;
+    --muted: #3f6b8a; --accent: #0d7ad0;
+    --card: rgba(255,255,255,.65); --line: rgba(8,40,66,.14); --hover: rgba(8,40,66,.10);
+  }
+  html[data-theme="ocean"] {
+    --bg1: #b9e0ff; --bg2: #eaf7ff; --fg: #0a2e4a;
+    --muted: #3f6b8a; --accent: #0d7ad0;
+    --card: rgba(255,255,255,.65); --line: rgba(8,40,66,.14); --hover: rgba(8,40,66,.10);
+  }
+  html[data-theme="forest"] {
+    --bg1: #b5ecc9; --bg2: #ecfcf1; --fg: #0d3a1e;
+    --muted: #3f6f50; --accent: #0e8f46;
+    --card: rgba(255,255,255,.65); --line: rgba(10,50,25,.14); --hover: rgba(10,50,25,.10);
+  }
+  html[data-theme="sunset"] {
+    --bg1: #ffd9a3; --bg2: #fff3e0; --fg: #57290a;
+    --muted: #8a5a2b; --accent: #e2740e;
+    --card: rgba(255,255,255,.7); --line: rgba(90,45,10,.16); --hover: rgba(90,45,10,.10);
+  }
+  html[data-theme="night"] {
+    --bg1: #151336; --bg2: #2a2560; --fg: #eef2ff;
+    --muted: #9aa0c9; --accent: #a78bfa;
+    --card: rgba(255,255,255,.06); --line: rgba(255,255,255,.16); --hover: rgba(255,255,255,.12);
+  }
+
+  #deck { position: fixed; inset: 0; }
+
+  .slide {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column; justify-content: center;
+    padding: 6vh clamp(28px, 8vw, 120px);
+    visibility: hidden;
+  }
+  .slide.on { visibility: visible; }
+
+  /* 장마다 배경에 은은한 빛 (위쪽) */
+  .slide::before {
+    content: ""; position: absolute; right: -12%; top: -18%;
+    width: 55vw; height: 55vw; border-radius: 50%;
+    background: radial-gradient(circle, var(--accent) 0%, transparent 62%);
+    opacity: .10; pointer-events: none;
+  }
+  /* 장마다 큰 장식 그림 (오른쪽 아래) */
+  .slide::after {
+    content: attr(data-deco); position: absolute; right: 1vw; bottom: 7vh;
+    font-size: clamp(120px, 34vh, 360px); line-height: 1;
+    opacity: .3; pointer-events: none; user-select: none;
+  }
+  .slide > * { position: relative; }
+
+  /* 장이 보일 때 내용이 아래에서 살짝 올라오며 나타난다 */
+  .slide > * { opacity: 0; transform: translateY(22px); }
+  .slide.on > * { animation: rise .7s cubic-bezier(.2,.7,.2,1) both; }
+  .slide.on > *:nth-child(2) { animation-delay: .12s; }
+  .slide.on > *:nth-child(3) { animation-delay: .24s; }
+  .slide.on > *:nth-child(4) { animation-delay: .36s; }
+  .slide.on > *:nth-child(5) { animation-delay: .48s; }
+  .slide.on > *:nth-child(6) { animation-delay: .58s; }
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(22px); }
+    to   { opacity: 1; transform: none; }
+  }
+
+  h1 {
+    margin: 0 0 2vh; font-weight: 900; line-height: 1.12;
+    font-size: clamp(52px, 10vw, 124px); letter-spacing: -.02em;
+    color: var(--fg);
+  }
+  h2 {
+    margin: 0 0 3vh; font-weight: 900; line-height: 1.2;
+    font-size: clamp(40px, 7vw, 88px); color: var(--fg);
+  }
+
+  /* 목차 */
+  .toc { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(10px, 1.6vw, 20px); max-width: min(90vw, 900px); align-self: center; margin-top: 1vh; }
+  .tocitem {
+    display: flex; align-items: center; gap: 12px; white-space: nowrap;
+    font-size: clamp(18px, 2.2vw, 32px); font-weight: 700; color: var(--fg);
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: 16px; padding: clamp(10px, 1.6vw, 18px) clamp(14px, 2vw, 24px);
+  }
+  .tocitem span {
+    flex: none; width: clamp(30px, 4.2vw, 50px); height: clamp(30px, 4.2vw, 50px);
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 50%; background: rgba(167,139,250,.18); color: var(--accent);
+    font-weight: 900; font-size: clamp(16px, 2.2vw, 30px);
+  }
+
+  /* 실천 약속 목록 — 서랍처럼 열리고 닫힌다 */
+  .plan { align-self: center; display: flex; flex-direction: column; gap: clamp(10px, 1.6vh, 16px); max-width: min(92vw, 940px); margin-top: 1vh; }
+  .planentry {
+    display: flex; flex-direction: column; overflow: hidden;
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: 18px; transition: border-color .25s, background .25s;
+  }
+  .planentry.open { border-color: var(--accent); background: rgba(167,139,250,.13); }
+  .planitem {
+    display: flex; align-items: center; gap: 16px; cursor: pointer;
+    font-weight: 700; color: var(--fg); -webkit-tap-highlight-color: transparent;
+    padding: clamp(12px, 1.9vh, 22px) clamp(18px, 2.4vw, 32px);
+    font-size: clamp(18px, 2.5vw, 34px);
+  }
+  .planitem:hover { color: var(--accent); }
+  .planitem.static { cursor: default; }
+  .planitem.static::after { content: none; }
+  .planitem::after { content: "▾"; margin-left: auto; color: var(--muted); transition: transform .3s; font-size: 1.1em; }
+  .planentry.open .planitem::after { transform: rotate(180deg); }
+  .planitem span {
+    flex: none; width: clamp(30px, 4vw, 48px); height: clamp(30px, 4vw, 48px);
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 50%; background: rgba(167,139,250,.18); color: var(--accent);
+    font-weight: 900; font-size: clamp(15px, 2vw, 28px);
+  }
+  .planbody { max-height: 0; overflow: hidden; transition: max-height .45s cubic-bezier(.2,.7,.2,1); }
+  .planentry.open .planbody { max-height: 180px; }
+  .plantext {
+    margin: 0; padding: 4px clamp(20px, 2.6vw, 34px) 16px;
+    color: var(--accent); font-weight: 800; text-align: left;
+    font-size: clamp(16px, 2.1vw, 28px);
+  }
+
+  /* 마지막 실천 장 — 다섯 칸이 다 들어가게 */
+  .slide.compact { padding: 3vh clamp(28px, 8vw, 120px); }
+  /* 4페이지 — 그래프를 위로 붙여 느낌표는 원래 자리에 */
+  .slide.compact.chartslide {
+    padding: 1vh clamp(28px, 8vw, 120px) 16vh;
+    justify-content: flex-start;
+  }
+  .slide.chartslide h2 { margin-bottom: 1vh; }
+  .slide.chartslide .row { margin-top: -1vh; }
+  /* 4페이지 느낌표: 제목 옆에 */
+  .slide.chartslide::after {
+    left: auto; right: 4vw; top: 7vh; bottom: auto;
+    font-size: clamp(64px, 13vh, 150px); opacity: .3;
+  }
+  .slide.compact .overline { margin-bottom: 1.6vh; }
+  .slide.compact h2 { font-size: clamp(32px, 5.2vw, 68px); margin-bottom: 2vh; }
+  .slide.compact .plan { gap: clamp(7px, 1.1vh, 12px); }
+  /* 사용시간 막대그래프 */
+  .chartwrap { flex: 2 1 400px; min-width: 0; align-self: center; padding-bottom: .5vh; }
+  .chart { display: flex; align-items: flex-end; gap: clamp(10px, 3.4vw, 40px); height: clamp(180px, 36vh, 260px); padding: 0 clamp(2px, .8vw, 8px); border-bottom: 4px solid var(--line); }
+  .cgroup { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; gap: 6px; }
+  .cval { font-weight: 900; font-size: clamp(17px, 2.3vw, 30px); color: var(--fg); white-space: nowrap; }
+  .cbar { width: clamp(38px, 7.5vw, 95px); border-radius: 10px 10px 0 0; background: linear-gradient(180deg, rgba(13,122,208,.35), var(--accent)); }
+  .cbar.tall { background: linear-gradient(180deg, #16a34a, var(--accent)); }
+  .lblrow { display: flex; gap: clamp(8px, 3vw, 30px); padding: 0 clamp(2px, .8vw, 8px); margin-top: 8px; }
+  .lblrow span { flex: 1; text-align: center; font-weight: 700; font-size: clamp(17px, 2.4vw, 32px); color: var(--fg); white-space: nowrap; }
+  .src { margin: 1vh 0 0; text-align: center; font-size: clamp(12px, 1.5vw, 20px); color: var(--muted); white-space: nowrap; }
+
+  p, li { font-size: clamp(22px, 3vw, 44px); margin: 0 0 1vh; color: var(--fg); }
+  ul { padding-left: 1.15em; margin: 0; }
+  li { margin: .5em 0; }
+  li::marker { color: var(--accent); }
+  .overline {
+    font-size: clamp(18px, 2.3vw, 30px); letter-spacing: .34em;
+    color: var(--accent); font-weight: 700; margin-bottom: 3vh;
+  }
+  .sub { font-size: clamp(24px, 3.4vw, 48px); color: var(--fg); }
+  .lead { font-size: clamp(30px, 4.4vw, 62px); }
+  .muted { color: var(--muted); font-size: clamp(17px, 2.2vw, 30px); }
+  .hl { color: var(--accent); }
+
+  /* 그림·영상 — 화면에 맞게 자동 조절 */
+  .media {
+    align-self: center; max-width: 78%; max-height: 54vh; object-fit: contain;
+    border-radius: 20px; margin: 2vh 0;
+  }
+  .media.big { max-width: 94%; max-height: 60vh; }
+  .zoom {
+    width: min(94vw, 1200px); height: auto;
+    max-width: none; max-height: 78vh;
+  }
+
+  /* 질문+사진 나란히 배치 */
+  .gapwide { gap: clamp(24px, 5vw, 80px); }
+  .tcol { flex: 1 1 340px; min-width: 0; }
+  .pcol { flex: 1.4 1 400px; min-width: 0; display: flex; align-items: center; justify-content: center; }
+  .pcol .photo { width: 100%; height: auto; max-width: none; max-height: 72vh; border-radius: 18px; margin: 0; }
+  /* 좋은 점 페이지: 목록이 왼쪽 칸에 들어맞게 */
+  .planleft { margin-top: 0; max-width: none; }
+  .planleft .planitem { font-size: clamp(15px, 1.9vw, 27px); padding: clamp(8px, 1.3vh, 14px) clamp(14px, 1.8vw, 22px); }
+
+  /* 떨어지는 답 퀴즈 게임 */
+  .qgame { align-self: center; width: 100%; max-width: min(92vw, 980px); margin: .5vh 0 0; display: flex; flex-direction: column; }
+  .qtop { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+  .qscore { flex: none; font-weight: 900; font-size: clamp(17px, 2.2vw, 30px); color: var(--fg); background: var(--card); border: 1px solid var(--line); border-radius: 999px; padding: 5px 14px; }
+  .qscore b { color: var(--accent); font-size: 1.15em; }
+  .qtimer { flex: 1; height: 14px; background: rgba(8,40,66,.12); border-radius: 999px; overflow: hidden; }
+  .qtimer i { display: block; height: 100%; width: 100%; background: linear-gradient(90deg, #16a34a, #4ade80); border-radius: 999px; transition: background .3s; }
+  .qtimer i.urgent { background: linear-gradient(90deg, #dc2626, #f87171); }
+  .qfield { position: relative; height: clamp(180px, 32vh, 270px); overflow: hidden; border: 1px solid var(--line); border-radius: 18px; background: var(--card); }
+  .qfield.static { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; padding: 12px; overflow: auto; }
+  .qfield.static .fallchip { position: static; }
+  .fallchip {
+    position: absolute; left: 0; top: 0; cursor: pointer; user-select: none; white-space: nowrap;
+    font-weight: 800; font-size: clamp(15px, 2vw, 26px);
+    padding: clamp(8px, 1.5vh, 15px) clamp(13px, 2vw, 24px); border-radius: 999px;
+    color: var(--fg); background: rgba(13,122,208,.12); border: 2px solid var(--accent);
+    box-shadow: 0 4px 10px rgba(8,40,66,.12);
+  }
+  .fallchip.dead { opacity: .35; pointer-events: none; text-decoration: line-through; border-style: dashed; }
+  .fallchip.hit { background: rgba(22,163,74,.25); border-color: #16a34a; }
+  .qmsg { margin: 1vh 0 0; min-height: 1.5em; font-weight: 900; font-size: clamp(20px, 3vw, 42px); text-align: center; }
+  .qmsg.good { color: #16a34a; }
+  .qmsg.bad { color: #dc2626; }
+  .qans {
+    align-self: center; margin: 1vh 0 0; text-align: center;
+    font-weight: 900; font-size: clamp(17px, 2.4vw, 32px); color: #16a34a;
+    background: rgba(22,163,74,.12); border: 2px solid #16a34a; border-radius: 14px;
+    padding: 8px 18px; visibility: hidden;
+  }
+  .qans.show { visibility: visible; }
+
+  /* 정답 알림창 — 화면 한가운데에 크게 */
+  .qmodal { position: fixed; inset: 0; z-index: 200; display: flex; align-items: center; justify-content: center; background: rgba(10,20,40,.5); }
+  .qmodal[hidden] { display: none; }
+  .qmodalbox {
+    background: #ffffff; color: #0a2e4a; border: 4px solid #16a34a; border-radius: 26px;
+    padding: clamp(26px, 5vh, 56px) clamp(24px, 5vw, 72px); text-align: center;
+    box-shadow: 0 18px 60px rgba(0,0,0,.35); max-width: 88vw;
+  }
+  .qmodalbox p { margin: 0 0 22px; font-weight: 900; line-height: 1.35; font-size: clamp(24px, 4.6vw, 60px); color: #0d7a35; white-space: pre-line; word-break: keep-all; }
+  .qmodalbox button {
+    font-family: inherit; font-weight: 900; cursor: pointer; border: none;
+    font-size: clamp(18px, 2.6vw, 34px); color: #fff; background: #16a34a;
+    border-radius: 999px; padding: 12px 44px;
+  }
+  .qmodalbox button:hover { background: #128a3e; }
+  .qagain { align-self: center; margin-top: 1vh; font-family: inherit; font-weight: 800; font-size: clamp(14px, 1.8vw, 24px); cursor: pointer; border: none; border-radius: 999px; padding: 10px 24px; background: var(--accent); color: #fff; }
+  .qagain[hidden] { display: none; }
+  .row { display: flex; gap: clamp(18px, 4vw, 56px); align-items: center; flex-wrap: wrap; }
+  .col { flex: 1 1 240px; }
+
+  /* 아래쪽 안내 표시와 넘김 버튼 */
+  .badge {
+    position: fixed; left: 26px; bottom: 22px; z-index: 60;
+    font-size: 15px; color: var(--muted); letter-spacing: .03em;
+    display: flex; align-items: center; gap: 12px;
+  }
+  #p {
+    padding: 4px 12px; border-radius: 999px; background: var(--card);
+    color: var(--accent); font-weight: 700; font-size: 14px;
+  }
+  .nav {
+    position: fixed; right: 24px; bottom: 18px; z-index: 60;
+    display: flex; gap: 10px;
+  }
+  .nav button {
+    width: 54px; height: 54px; border-radius: 50%; cursor: pointer;
+    border: 1px solid var(--line); background: var(--card);
+    color: var(--fg); font-size: 20px; line-height: 1;
+    transition: border-color .2s, background .2s;
+  }
+  .nav button:hover { border-color: var(--accent); background: var(--hover); }
+
+  /* 작은 화면(폰)에서도 잘 보이게 */
+  @media (max-width: 760px) {
+    .slide { padding: 5vh 6vw; overflow-y: auto; }
+    .slide::after { font-size: 110px; opacity: .2; }
+    .badge { left: 12px; bottom: 10px; font-size: 11px; }
+    .nav { right: 10px; bottom: 8px; gap: 8px; }
+    .nav button { width: 46px; height: 46px; font-size: 17px; }
+  }
+
+  /* 마지막 검은 화면 */
+  .slide.black { background: #000; }
+  .slide.black::before, .slide.black::after { content: none; }
+
+  /* 움직임이 불편한 사람을 위해 — 바로 보여준다 */
+  @media (prefers-reduced-motion: reduce) {
+    .slide > *, .slide.on > * { animation: none !important; opacity: 1 !important; transform: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<div id="deck">
+
+  <!-- 1. 표지 -->
+  <section class="slide on cover" data-deco="👀">
+    <p class="overline">12조 · 학년차이 4인방</p>
+    <h1><span class="hl">눈아,</span> 쉬자!</h1>
+    <p class="sub lead">디지털 발자국 · 인터넷 사용시간 줄이기</p>
+    <p class="muted">과학 캠페인 발표자료</p>
+  </section>
+
+  <!-- 2. 목차 -->
+  <section class="slide" data-deco="🧭">
+    <p class="overline">발표 순서</p>
+    <h2>우리가 들려줄 이야기</h2>
+    <div class="toc">
+      <div class="tocitem"><span>1</span>디지털 발자국이란?</div>
+      <div class="tocitem"><span>2</span>줄여야 하는 이유</div>
+      <div class="tocitem"><span>3</span>폰을 오래 보면?</div>
+      <div class="tocitem"><span>4</span>퀴즈! 발자국은 무엇?</div>
+      <div class="tocitem"><span>5</span>퀴즈! 왜 줄여야 할까?</div>
+      <div class="tocitem"><span>6</span>이렇게 실천해요</div>
+    </div>
+  </section>
+
+  <!-- 3. 무엇을 하는 중일까요? -->
+  <section class="slide" data-deco="🤳">
+    <div class="row gapwide">
+      <div class="col tcol">
+        <p class="overline">우리 주변을 살펴보면</p>
+        <h2>이 사람들은 무엇을 하는<br>중일까요?</h2>
+        <p class="muted">아마도 유튜브, 인스타그램 같은 인터넷을 하고 있을 것입니다.</p>
+      </div>
+      <div class="col pcol">
+        <img class="photo" src="assets/photo-1.jpg" alt="사람들이 무엇을 하고 있는지 묻는 사진">
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. 디지털 발자국이란? -->
+  <section class="slide" data-deco="👣">
+    <p class="overline">먼저 알아보기</p>
+    <h2>디지털 <span class="hl">발자국</span>이란?</h2>
+    <p class="sub">인터넷 사용시간을 뜻하는 말입니다.</p>
+    <p>우리가 인터넷을 사용하면 <span class="hl">발자국이 생긴다</span>고 표현해요.</p>
+    <p class="sub">그래서 우리는 <span class="hl">"발자국을 지우자!"</span>라고 생각하게 됐어요.</p>
+  </section>
+
+  <!-- 5. 줄여야 하는 이유 -->
+  <section class="slide compact chartslide" data-deco="❗">
+    <h2>디지털 발자국을<br>줄여야 되는 이유는?</h2>
+    <div class="row">
+      <ul class="col">
+        <li>친구들이 폰을 너무 오래 봐요</li>
+        <li>이야기보다 폰이 먼저예요</li>
+        <li>폰을 오래 보면 눈과 몸이 아파요</li>
+      </ul>
+      <div class="col chartwrap">
+        <div class="chart">
+          <div class="cgroup"><div class="cval">1시간 45분</div><div class="cbar" style="height:120px"></div></div>
+          <div class="cgroup"><div class="cval">2시간 24분</div><div class="cbar tall" style="height:165px"></div></div>
+          <div class="cgroup"><div class="cval">2시간 15분</div><div class="cbar" style="height:154px"></div></div>
+        </div>
+        <div class="lblrow"><span>초등학생</span><span>중학생</span><span>고등학생</span></div>
+        <p class="src">하루 평균 스마트폰 사용시간 · 출처: 방송통신위원회 (2019년 10월)</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6. 폰을 오래 볼수록 몸은 망가져요 -->
+  <section class="slide" data-deco="📱">
+    <h2>폰을 오래 볼수록<br>우리의 몸은 <span class="hl">망가집니다</span></h2>
+    <img class="media big" src="assets/포스터-3.jpg" alt="시간 그래프 위에서 5분의 아이는 건강하고 5시간의 아이는 지쳐 보이는 그림, 다섯 아이 모두 자기 핸드폰 화면을 보고 있음">
+  </section>
+
+  <!-- 7. 퀴즈 1: 디지털 발자국은 무엇일까요? -->
+  <section class="slide compact" data-deco="❓">
+    <p class="overline">퀴즈 1 · 10초 안에 맞는 답을 눌러 잡아요!</p>
+    <h2>디지털 발자국은<br>무엇일까요?</h2>
+    <div class="qgame" data-opts="인터넷 검색기록|인터넷 사용하기|인터넷 사용시간|걸을 때 생기는 것" data-correct="2" data-ans="정답은 인터넷 사용시간이에요!">
+      <div class="qtop">
+        <span class="qscore">점수 <b>0/100</b></span>
+        <span class="qtimer"><i></i></span>
+      </div>
+      <div class="qfield"></div>
+      <p class="qmsg"></p>
+      <button class="qagain" hidden>다시 하기</button>
+    </div>
+  </section>
+
+  <!-- 8. 퀴즈 2: 왜 줄여야 할까? -->
+  <section class="slide compact" data-deco="🤔">
+    <p class="overline">퀴즈 2 · 10초 안에 맞는 답을 눌러 잡아요!</p>
+    <h2>디지털 발자국은<br>왜 줄여야 할까?</h2>
+    <div class="qgame" data-opts="친구들과 게임하기 위해서|친구들과 이야기하고 놀기 위해서|일상생활을 잘 못하기 위해서|선생님한테 잘 보이기 위해서" data-correct="1" data-ans="정답은 친구들과 이야기하고 놀기 위해서예요! 폰보다 친구들이 더 중요해요!">
+      <div class="qtop">
+        <span class="qscore">점수 <b>0/100</b></span>
+        <span class="qtimer"><i></i></span>
+      </div>
+      <div class="qfield"></div>
+      <p class="qmsg"></p>
+      <button class="qagain" hidden>다시 하기</button>
+    </div>
+  </section>
+
+  <!-- 9. 질문 -->
+  <section class="slide" data-deco="💭">
+    <p class="overline">우리에게 남긴 질문</p>
+    <h2>우리는 어떻게 하면<br><span class="hl">디지털 발자국을 줄일 수 있을까?</span></h2>
+    <p class="sub">여러분도 우리와 함께 시작해 봐요!</p>
+  </section>
+
+  <!-- 10. 실천 약속 -->
+  <section class="slide compact" data-deco="💡">
+    <p class="overline">우리의 실천 약속</p>
+    <h2>이렇게 <span class="hl">실천</span>해 봐요!</h2>
+    <div class="plan">
+      <div class="planentry">
+        <div class="planitem"><span>1</span>하루 사용시간 목표 정하기</div>
+        <div class="planbody"><p class="plantext">목표를 정해야 지키기 더 쉽다!</p></div>
+      </div>
+      <div class="planentry">
+        <div class="planitem"><span>2</span>30분마다 눈과 몸 쉬기</div>
+        <div class="planbody"><p class="plantext">30분 이상 연속해서 인터넷을 보면 눈과 몸이 쉽게 지쳐요!</p></div>
+      </div>
+      <div class="planentry">
+        <div class="planitem"><span>3</span>잠들기 1시간 전 스마트폰 끄기</div>
+        <div class="planbody"><p class="plantext">잘 때 폰 보는 것이 가장 좋지 않아요!</p></div>
+      </div>
+      <div class="planentry">
+        <div class="planitem"><span>4</span>공부 시간에는 알림 끄기</div>
+        <div class="planbody"><p class="plantext">공부할 때는 완전 차단!</p></div>
+      </div>
+      <div class="planentry">
+        <div class="planitem"><span>5</span>운동·독서 등 다른 활동 즐기기</div>
+        <div class="planbody"><p class="plantext">다른 활동을 열심히 해야 잊기 쉽다!</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 11. 실천하면 생기는 좋은 점 -->
+  <section class="slide compact" data-deco="🌈">
+    <div class="row gapwide">
+      <div class="col tcol">
+        <p class="overline">실천하면 생기는 변화</p>
+        <h2>약속을 지키면 <span class="hl">좋은 점</span>이 생겨요!</h2>
+        <div class="plan planleft">
+          <div class="planitem static"><span>1</span>눈이 덜 아프고 시원해져요</div>
+          <div class="planitem static"><span>2</span>밤에 잠을 푹 잘 자요</div>
+          <div class="planitem static"><span>3</span>친구·가족과 더 많이 이야기해요</div>
+          <div class="planitem static"><span>4</span>운동과 독서로 몸과 마음이 건강해져요</div>
+          <div class="planitem static"><span>5</span>하루를 알차게 쓸 수 있어요</div>
+        </div>
+      </div>
+      <div class="col pcol">
+        <img class="photo" src="assets/photo-2.jpg" alt="실천 약속을 지키는 모습 사진">
+      </div>
+    </div>
+  </section>
+
+  <!-- 12. 마무리 인사 -->
+  <section class="slide" data-deco="🌟">
+    <p class="overline">눈아, 쉬자!</p>
+    <h2>지금까지 <span class="hl">12조 학년차이 4인방</span><br>이었습니다</h2>
+    <p class="sub"><span class="hl">우리 모두 발자국을 줄여봐요!</span></p>
+    <p class="sub">감사합니다!</p>
+  </section>
+
+  <!-- 13. 마무리 검은 화면 -->
+  <section class="slide black"></section>
+
+  <!-- 여기에 친구들 슬라이드가 들어갑니다 (합쳐줘 를 쓰면 아래에 채워져요) -->
+  <!-- 친구들 슬라이드 끝 -->
+
+</div>
+
+<div class="qmodal" id="qmodal" hidden>
+  <div class="qmodalbox">
+    <p id="qmodaltext"></p>
+    <button id="qmodalok">확인</button>
+  </div>
+</div>
+
+<div class="badge">12조 · 학년차이 4인방<span id="p">1 / 1</span></div>
+<div class="nav">
+  <button id="prev" aria-label="이전 장">◀</button>
+  <button id="next" aria-label="다음 장">▶</button>
+</div>
+
+<script>
+  // 장 넘기기 — 화살표 키와 버튼 둘 다 됩니다
+  var slides = Array.prototype.slice.call(document.querySelectorAll('#deck .slide'));
+  var now = 0;
+
+  function show(n) {
+    if (n < 0) n = slides.length - 1;
+    if (n >= slides.length) n = 0;
+    slides[now].classList.remove('on');
+    now = n;
+    slides[now].classList.add('on');
+    var p = document.getElementById('p');
+    if (p) p.textContent = (now + 1) + ' / ' + slides.length;
+    안전망(now);
+    try { history.replaceState(null, '', '#' + (now + 1)); } catch (e) {}
+    document.dispatchEvent(new Event('slidechange'));
+  }
+
+  // 어떤 이유로 글자가 안 나타나면 1.5초 뒤 그냥 보여준다
+  function 안전망(k) {
+    setTimeout(function () {
+      var s = slides[k];
+      if (!s || !s.classList.contains('on')) return;
+      var kids = s.children;
+      for (var j = 0; j < kids.length; j++) {
+        if (getComputedStyle(kids[j]).opacity !== '1') {
+          kids[j].style.animation = 'none';
+          kids[j].style.opacity = '1';
+          kids[j].style.transform = 'none';
+        }
+      }
+    }, 1500);
+  }
+
+  document.getElementById('prev').addEventListener('click', function () { show(now - 1); });
+  document.getElementById('next').addEventListener('click', function () { show(now + 1); });
+  window.addEventListener('keydown', function (e) {
+    if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ') { show(now + 1); }
+    else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { show(now - 1); }
+  });
+
+  // 폰: 화면을 옆으로 밀어서 장 넘기기
+  (function () {
+    var sx = null, sy = null;
+    document.addEventListener('touchstart', function (e) {
+      sx = e.changedTouches[0].clientX;
+      sy = e.changedTouches[0].clientY;
+    }, { passive: true });
+    document.addEventListener('touchend', function (e) {
+      if (sx === null) return;
+      var dx = e.changedTouches[0].clientX - sx;
+      var dy = e.changedTouches[0].clientY - sy;
+      sx = null; sy = null;
+      if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy)) {
+        if (dx < 0) show(now + 1); else show(now - 1);
+      }
+    }, { passive: true });
+  })();
+
+  // 떨어지는 답 퀴즈 게임 — 10초 안에 맞는 답을 눌러 잡기
+  (function () {
+    var TOTAL_SEC = 10;
+    var QSCORE = 0;
+    var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var games = [];
+    var qgames = document.querySelectorAll('.qgame');
+
+    function paintAll() {
+      Array.prototype.forEach.call(qgames, function (b) {
+        var el = b.querySelector('.qscore b');
+        if (el) el.textContent = QSCORE + '/100';
+      });
+    }
+
+    Array.prototype.forEach.call(qgames, function (box, gi) {
+      var field = box.querySelector('.qfield');
+      var msg = box.querySelector('.qmsg');
+      var bar = box.querySelector('.qtimer i');
+      var again = box.querySelector('.qagain');
+      var opts = (box.getAttribute('data-opts') || '').split('|').map(function (s) { return s.trim(); });
+      var correct = parseInt(box.getAttribute('data-correct'), 10);
+      var g = { started: false, over: false, secs: TOTAL_SEC, chips: [], raf: null, last: 0, first: true };
+
+      function stop() {
+        if (g.raf) cancelAnimationFrame(g.raf);
+        g.raf = null; g.last = 0;
+        bar.style.width = '100%';
+      }
+
+      function finish() {
+        again.hidden = false;
+        if (gi === qgames.length - 1) {
+          if (QSCORE >= 100) {
+            msg.textContent = '100점!! 칭호 "발자국 지키미"를 획득했어요!';
+            msg.className = 'qmsg good';
+          } else if (QSCORE >= 50) {
+            msg.textContent += ' 좋아요! 거의 다 왔어요!';
+          } else {
+            msg.textContent += ' 아쉬워요! 다시 도전해 봐요!';
+          }
+        }
+        paintAll();
+      }
+
+      function overGood() {
+        g.over = true; stop();
+        QSCORE += 50; paintAll();
+        msg.textContent = '정답! +50점!';
+        msg.className = 'qmsg good';
+        var mt = document.getElementById('qmodaltext');
+        var modal = document.getElementById('qmodal');
+        if (mt && modal) {
+          mt.textContent = (box.getAttribute('data-ans') || '').replace(/!\s+/g, '!\n');
+          modal.hidden = false;
+        }
+        finish();
+      }
+
+      function overTime() {
+        g.over = true; stop();
+        msg.textContent = '시간이 다 됐어요! 정답은 "' + opts[correct] + '"!';
+        msg.className = 'qmsg bad';
+        finish();
+      }
+
+      function makeChips() {
+        field.innerHTML = '';
+        g.chips = [];
+        opts.forEach(function (text) {
+          var c = document.createElement('div');
+          c.className = 'fallchip';
+          c.textContent = text;
+          field.appendChild(c);
+          g.chips.push({ el: c, i: g.chips.length, x: 0, y: 0, speed: 60 + Math.random() * 60, dead: false });
+        });
+        if (reduce) field.classList.add('static');
+      }
+
+      function layout() {
+        var w = field.clientWidth || 600;
+        var h = field.clientHeight || 250;
+        g.chips.forEach(function (ch) {
+          var cw = ch.el.offsetWidth || 150;
+          ch.x = Math.random() * Math.max(10, w - cw - 10);
+          ch.y = -(30 + Math.random() * h * 0.5);
+          ch.speed = 55 + Math.random() * 65;
+          ch.el.style.left = ch.x + 'px';
+          ch.el.style.top = ch.y + 'px';
+        });
+      }
+
+      function tick(ts) {
+        var slide = box.closest('.slide');
+        if (!slide || !slide.classList.contains('on')) { g.raf = requestAnimationFrame(tick); return; }
+        if (!g.last) g.last = ts;
+        var dt = Math.min(50, ts - g.last);
+        g.last = ts;
+
+        g.secs -= dt / 1000;
+        if (g.secs <= 0) { g.secs = 0; overTime(); return; }
+        bar.style.width = (g.secs / TOTAL_SEC * 100) + '%';
+        if (g.secs <= 3 && !bar.classList.contains('urgent')) bar.classList.add('urgent');
+
+        if (!reduce) {
+          var h = field.clientHeight || 250;
+          var w = field.clientWidth || 600;
+          g.chips.forEach(function (ch) {
+            if (ch.dead) return;
+            ch.y += ch.speed * dt / 1000;
+            if (ch.y > h + 20) {
+              ch.y = -(40 + Math.random() * 100);
+              var cw = ch.el.offsetWidth || 150;
+              ch.x = Math.random() * Math.max(10, w - cw - 10);
+              ch.el.style.left = ch.x + 'px';
+            }
+            ch.el.style.top = ch.y + 'px';
+          });
+        }
+        g.raf = requestAnimationFrame(tick);
+      }
+
+      function startIfVisible() {
+        var slide = box.closest('.slide');
+        if (!slide || !slide.classList.contains('on') || g.over) return;
+        if (!g.started) {
+          g.started = true;
+          makeChips(); layout();
+          bar.style.width = '100%';
+        }
+        if (!g.raf) { g.last = 0; g.raf = requestAnimationFrame(tick); }
+      }
+
+      field.addEventListener('click', function (e) {
+        var el = e.target.closest ? e.target.closest('.fallchip') : null;
+        if (!el || g.over) return;
+        var idx = -1;
+        g.chips.forEach(function (ch) { if (ch.el === el) idx = ch.i; });
+        if (idx < 0) return;
+        if (idx === correct) {
+          el.classList.add('hit');
+          overGood();
+        } else {
+          g.chips[idx].dead = true;
+          el.classList.add('dead');
+          msg.textContent = '아니야! 다른 답을 찾아봐!';
+          msg.className = 'qmsg bad';
+        }
+      });
+
+      again.addEventListener('click', function () { location.reload(); });
+      g.startIfVisible = startIfVisible;
+      games.push(g);
+    });
+
+    document.addEventListener('slidechange', function () {
+      games.forEach(function (g) { g.startIfVisible(); });
+    });
+
+    // 정답 알림창 닫기
+    var modal = document.getElementById('qmodal');
+    var okBtn = document.getElementById('qmodalok');
+    if (modal && okBtn) {
+      okBtn.addEventListener('click', function () { modal.hidden = true; });
+      modal.addEventListener('click', function (e) {
+        if (e.target === modal) modal.hidden = true;
+      });
+    }
+  })();
+
+  // 실천 약속 — 서랍처럼 열고 닫는다 (같은 칸을 다시 누르면 닫힌다)
+  (function () {
+    var entries = document.querySelectorAll('.planentry');
+    Array.prototype.forEach.call(entries, function (entry) {
+      var item = entry.querySelector('.planitem');
+      if (!item) return;
+      item.addEventListener('click', function () {
+        var isOpen = entry.classList.contains('open');
+        Array.prototype.forEach.call(entries, function (o) { o.classList.remove('open'); });
+        if (!isOpen) entry.classList.add('open');
+      });
+    });
+  })();
+
+  // 처음에는 1장부터 (주소에 #숫자 가 있으면 그 장부터)
+  var startIdx = parseInt((location.hash || '').replace('#', ''), 10);
+  show((isNaN(startIdx) || startIdx < 1) ? 0 : startIdx - 1);
+</script>
+</body>
+</html>
